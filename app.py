@@ -4,7 +4,6 @@ from test import testing
 import os
 
 if __name__ == "__main__":
-    os.system('cls')
     with app.app_context():
         db.create_all()
         testing()
