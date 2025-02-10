@@ -1,38 +1,20 @@
 import secrets, os
 from PIL import Image
-from flask import redirect, url_for, render_template, request, flash
-from Site.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm
+from flask import redirect, url_for, render_template, request, flash, abort
+from Site.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, requestResetForm, resetPasswordForm
 from Site.models import User, Post
-from Site import app, db, bcrypt
+from Site import app, db, bcrypt, mail, Message, env_var
 from flask_login import login_user, current_user, logout_user, login_required
 
 @app.route("/")
 def index():
     return redirect(url_for('home'))
 
-@app.route("/home")
+@app.route("/home", methods=["GET", "POST"])
 def home():
-    posts = Post.query.all()
-    img_file = None
-    if current_user.is_authenticated:
-        img_file = url_for('static', filename=f'profile_pics/{current_user.image_file}')
-    return render_template("home.html", title='Home', image_file=img_file, posts=posts)
-
-
-# @app.route("/login", methods=["POST", "GET"])
-# def login():
-#     if request.method == "POST":
-#         session.permanent = True
-#         user = request.form["nm"]
-#         session["user"] = user
-#         flash("you have been logged in successfully", "info")
-#         return redirect(url_for("user"))
-#     else:
-#         if "user" in session:
-#             flash("you are already logged in", "info")
-#             return redirect(url_for("user"))
-#         else:
-#             return render_template("login.html", Title='Login')
+    page = request.args.get('page', 1, type=int)
+    posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=2)
+    return render_template("home.html", title='Home', posts=posts)
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
@@ -45,8 +27,9 @@ def register():
         user = User(username=form.username.data, email=form.email.data, password=hashed_pwd)
         db.session.add(user)
         db.session.commit()
+        login_user(user)
         flash(f'account created for {form.username.data}! please login', 'success')
-        return redirect(url_for('login'))
+        return redirect(url_for('home'))
     return render_template('register.html', title='Register', form=form)
 
 
@@ -67,23 +50,12 @@ def login():
     return render_template('login.html', title='login', form=form)
 
 
-# @app.route("/user", methods=["GET", "POST"])
-# def user():
-    # email = None
-    #  if "user" in session:
-    #      user = session["user"]
-
-    #      if request.method == "POST":
-    #          email = request.form["email"]
-    #          session["email"] = email
-    #          flash("email was saved", "info")
-    #      else:
-    #          if "email" in session:
-    #              email = session["email"]
-    #      return render_template("user.html", email=email)
-    #  else:
-    #      flash("you are not logged in", "info")
-    #      return redirect(url_for("login"))
+@app.route("/user/<string:username>", methods=["GET", "POST"])
+def user(username):
+    page = request.args.get('page', 1, type=int)
+    user = User.query.filter_by(username=username).first_or_404("User not found")
+    posts = Post.query.filter_by(author=user).order_by(Post.date_posted.desc()).paginate(page=page, per_page=3)
+    return render_template('user.html', posts=posts, user=user)
 
 @app.route("/logout")
 def logout():
@@ -122,8 +94,26 @@ def account():
             form.username.data = current_user.username
         if form.email.data != current_user.email:
             form.email.data = current_user.email
-    img_file = url_for('static', filename=f'profile_pics/{current_user.image_file}')
-    return render_template('account.html', title='Account', image_file=img_file, form=form)
+    return render_template('account.html', title='Account', form=form)
+
+@app.route("/account/<int:user_id>/delete", methods=['POST'])
+@login_required
+def delete_account(user_id):
+    user = User.query.get(user_id)
+    if user != current_user:
+        abort(403)
+    logout_user()
+    db.session.delete(user)
+    db.session.commit()
+    flash('Your accocunt has been deleted', 'info') 
+    return redirect(url_for('home'))
+
+
+####################################################################
+@app.route('/post/<int:post_id>')
+def post(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template('post.html', title=post.title, post=post)
 
 @app.route('/post/new', methods=['GET', 'POST'])
 @login_required
@@ -135,5 +125,91 @@ def new_post():
         db.session.commit()
         flash("Your post has been created", 'success')
         return redirect(url_for("home"))
-    img_file = url_for('static', filename=f'profile_pics/{current_user.image_file}')
-    return render_template('create_post.html', title='New Post', form=form, image_file=img_file)
+    return render_template('create_post.html', title='New Post', form=form, legend="New Post")
+
+@app.route('/post/<int:post_id>/update', methods=['GET', 'POST'])
+@login_required
+def update_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.author != current_user:
+        abort(403)
+    form = PostForm()
+
+    if form.validate_on_submit():
+        post.title = form.title.data
+        post.content = form.content.data
+        post.is_updated = True
+        db.session.commit()
+        flash('Your post has been updated', 'success')
+        return redirect(url_for('post', post_id=post.id))
+    elif request.method == 'GET':
+            form.title.data = post.title
+            form.content.data = post.content
+
+    return render_template('create_post.html', title='Update Post', form=form, legend="Update Postd")
+
+
+@app.route('/post/<int:post_id>/delete', methods=['POST'])
+@login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.author != current_user:
+        abort(403)
+    db.session.delete(post)
+    db.session.commit()
+    flash('Your post has been deleted', 'info') 
+    return redirect(url_for('home'))
+
+
+def send_reset_email(user:User):
+    token = user.get_reset_token()
+    msg = Message('Password reset', sender=f'noreplay@demo.com', recipients=[user.email])
+
+    msg.body = f''' to reset you'r password visit the following link:
+{url_for('reset_password', token=token, _external=True)}
+    
+If you did not make this request then simply ignore this email
+    '''
+
+
+@app.route('/reset_password', methods=['GET','POST'])
+def reset_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    form = requestResetForm()
+
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        send_reset_email(user)
+        flash('An email has been sent to reset passowrd.', 'info')
+        return redirect(url_for('login'))
+
+    return render_template('reset_request.html', title='Reset Password', form=form, legend='Reset Password Request')
+
+@app.route('/reset_password/<token>', methods=['GET','POST'])
+def reset_password(token):
+    user = User.verify_reset_token(token)
+    if not user:
+        flash('invalid or expired token', 'warning')
+        return redirect(url_for('reset_request'))
+    
+    form = resetPasswordForm()
+    if form.validate_on_submit():
+        hashed_pwd = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        user.password = hashed_pwd
+        db.session.commit()
+        flash(f"You'r password has been updated", 'success')
+        return redirect(url_for('home'))
+    return render_template('reset_password.html', title='Reset Password', form=form, legend='Reset Password')
+
+@app.route('/user/reset_password', methods=['GET','POST'])
+@login_required
+def user_pwd_reset():
+    form = resetPasswordForm()
+    if form.validate_on_submit():
+        hashed_pwd = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        current_user.password = hashed_pwd
+        db.session.commit()
+        flash(f"You'r password has been updated", 'success')
+        return redirect(url_for('home'))
+    return render_template('reset_password.html', title='Reset Password', form=form, legend='Reset Password')

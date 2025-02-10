@@ -1,7 +1,40 @@
 {% extends "base.html" %}
 {% block Content %}
-<form action="#" method="post" class="form-inline my-2 my-lg-0">
-    <input type="email" name="email" placeholder="Email" value="{{email if email}}"/>
-    <input type="submit" value="submit"/>
-</form>
+<dev class="container">
+    <dev class="media">
+        <img class="rounded-circle account-img" src="{{ url_for('static', filename='profile_pics/' + user.image_file) }}">
+        <div class="media-body">
+            <h2 class="account-heading">{{ user.username }}</h2>
+            <p class="text-secondary">{{ user.email }}</p>
+        </div>
+    </dev>
+    {% for post in posts.items %}
+    <article class="media content-section">
+        <img class="rounded-circle article-img" 
+        src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}">
+
+        <div class="media-body">
+            <div class="article-metadata">
+                <a class="mr-2" href="{{ url_for('user', username=post.author.username) }}">{{ post.author.username }}</a>
+                <small class="text-muted">{{ post.date_posted.strftime('%Y-%m-%d') }}</small>
+                {% if post.is_updated %}
+                    <small class="text-muted">edited</small>
+                {% endif %}
+            </div>
+            <h2><a href="{{url_for('post', post_id=post.id)}}" class="article-title">{{ post.title }}</a></h2>
+            <p class="article-content">{{ post.content }}</p>
+        </div>
+        </article>
+    {% endfor %}
+    {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+        {% if page_num  %}
+            {% if posts.page == page_num  %}
+            <a class="btn btn-info mb-4" href="{{ url_for('user', username=user.username, page=page_num) }}">{{ page_num }}</a>
+            {% else %}
+            <a class="btn btn-outline-info mb-4" href="{{ url_for('user', username=user.username, page=page_num) }}">{{ page_num }}</a>
+            {% endif %}
+        {% else %}
+            ...
+        {% endif %}
+    {% endfor %}
 {% endblock %}

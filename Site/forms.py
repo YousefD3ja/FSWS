@@ -51,4 +51,18 @@ class UpdateAccountForm(FlaskForm):
 class PostForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
     content = TextAreaField('Content', validators=[DataRequired()])
-    submit = SubmitField("createPost")
+    submit = SubmitField("CreatePost")
+
+
+class requestResetForm(FlaskForm):
+    email = StringField("Email", validators=[DataRequired(), Email()])
+    submit = SubmitField("Requset Reset Password")
+
+    def validate_email(self, email):
+        if User.query.filter_by(email=email.data).first() == None:
+            raise ValidationError("email does not exist!")
+        
+class resetPasswordForm(FlaskForm):
+    password = PasswordField("Password", validators=[DataRequired(),Length(min=8)])
+    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(),Length(min=8), EqualTo('password')])
+    submit = SubmitField("Reset")

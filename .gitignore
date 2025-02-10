@@ -1,0 +1,4 @@
+#ignore specific files
+.env
+*.db
+/instance
