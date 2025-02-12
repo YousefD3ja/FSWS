@@ -1,7 +1,7 @@
-from Site import app, db
-from Site.models import User, Post
+from Site import create_app, db
 from test import testing
-import os
+
+app = create_app()
 
 if __name__ == "__main__":
     with app.app_context():

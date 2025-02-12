@@ -7,7 +7,7 @@
 
     <div class="media-body">
         <div class="article-metadata">
-            <a class="mr-2" href="{{ url_for('user', username=post.author.username) }}">{{ post.author.username }}</a>
+            <a class="mr-2" href="{{ url_for('users.user', username=post.author.username) }}">{{ post.author.username }}</a>
             <small class="text-muted">{{ post.date_posted.strftime('%Y-%m-%d') }}</small>
             {% if post.is_updated %}
             <small class="text-muted">edited</small>
@@ -15,7 +15,7 @@
 
             {% if current_user == post.author %}
             <div>
-                <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('update_post', post_id=post.id) }}">Update</a>
+                <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('posts.update_post', post_id=post.id) }}">Update</a>
                 <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deletePost">Delete</button>
             </div>
             {% endif %}
@@ -53,7 +53,7 @@
     {% else %}
     <div class="border-top pt-3">
         <h4 class="text-muted">
-            You need to be signed in to comment<a class="ml-2" href="{{ url_for('login') }}">Sign in</a>
+            You need to be signed in to comment<a class="ml-2" href="{{ url_for('users.login') }}">Sign in</a>
         </h4>
     {% endif %}
     <!-- Comments -->
@@ -64,7 +64,7 @@
     
         <div class="media-body">
             <div class="article-metadata">
-                <a class="mr-2" href="{{ url_for('user', username=comment.author.username) }}">{{ comment.author.username }}</a>
+                <a class="mr-2" href="{{ url_for('users.user', username=comment.author.username) }}">{{ comment.author.username }}</a>
                 <small class="text-muted">{{ comment.date_commented.strftime('%Y-%m-%d') }}</small>
                 {% if comment.is_updated %}
                 <small class="text-muted">edited</small>
@@ -72,7 +72,7 @@
     
                 {% if current_user == comment.author %}
                 <div>
-                    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('update_comment', post_id=post.id, comment_id=comment.id) }}">Update</a>
+                    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('comments.update_comment', post_id=post.id, comment_id=comment.id) }}">Update</a>
                     <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteComment{{comment.id}}">Delete</button>
                 </div>
                 {% endif %}
@@ -92,7 +92,7 @@
                     </div>
                     <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <form action="{{ url_for('delete_comment', post_id=post.id, comment_id=comment.id) }}" method="POST">
+                    <form action="{{ url_for('comments.delete_comment', post_id=post.id, comment_id=comment.id) }}" method="POST">
                         <input class="btn btn-danger" type="submit" value="Delete">
                     </form>
                     </div>
@@ -112,7 +112,7 @@
                     </div>
                     <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <form action="{{ url_for('delete_post', post_id=post.id) }}" method="POST">
+                    <form action="{{ url_for('posts.delete_post', post_id=post.id) }}" method="POST">
                         <input class="btn btn-danger" type="submit" value="Delete">
                     </form>
                     </div>
