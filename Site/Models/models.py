@@ -14,6 +14,7 @@ class User(db.Model, UserMixin):
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
     password = db.Column(db.String(16), nullable=False)
     posts = db.relationship('Post', backref='author', lazy=True, cascade="all, delete, delete-orphan")
+    comments = db.relationship('Comment', backref='author', lazy=True, cascade="all, delete, delete-orphan")
 
     def get_reset_token(self, expires_sec=1800):
         s = Serializer(app.secret_key)
@@ -38,6 +39,15 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=False)
     is_updated = db.Column(db.Boolean, nullable=False, default=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    comments = db.relationship('Comment', backref='post', lazy=True, cascade="all, delete, delete-orphan")
 
     def __repr__(self):
         return f"Post('{self.id}':'{self.title}', '{self.date_posted}')"
+    
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    date_commented = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    content = db.Column(db.Text, nullable=False)
+    is_updated = db.Column(db.Boolean, nullable=False, default=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)

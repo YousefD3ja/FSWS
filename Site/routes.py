@@ -1,8 +1,8 @@
 import secrets, os
 from PIL import Image
 from flask import redirect, url_for, render_template, request, flash, abort
-from Site.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, requestResetForm, resetPasswordForm
-from Site.models import User, Post
+from Site.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, RequestResetForm, ResetPasswordForm, CommentForm
+from Site.models import User, Post, Comment
 from Site import app, db, bcrypt, mail, Message, env_var
 from flask_login import login_user, current_user, logout_user, login_required
 
@@ -110,10 +110,18 @@ def delete_account(user_id):
 
 
 ####################################################################
-@app.route('/post/<int:post_id>')
+@app.route('/post/<int:post_id>', methods=['GET', 'POST'])
 def post(post_id):
     post = Post.query.get_or_404(post_id)
-    return render_template('post.html', title=post.title, post=post)
+    comments = Comment.query.filter_by(post_id=post.id).all()
+    form = CommentForm()
+    if form.validate_on_submit():
+        comment = Comment(content=form.content.data, author=current_user, post=post)
+        db.session.add(comment)
+        db.session.commit()
+        flash("Your comment has been posted", 'success')
+        return redirect(url_for("post", post_id=post.id))
+    return render_template('post.html', title=post.title, post=post, comments=comments, form=form)
 
 @app.route('/post/new', methods=['GET', 'POST'])
 @login_required
@@ -160,30 +168,69 @@ def delete_post(post_id):
     flash('Your post has been deleted', 'info') 
     return redirect(url_for('home'))
 
+################
+@app.route('/post/<int:post_id>/<int:comment_id>/update', methods=['GET', 'POST'])
+@login_required
+def update_comment(post_id,comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    if comment.author != current_user:
+        abort(403)
+    form = CommentForm()
+    if form.validate_on_submit():
+        comment.content = form.content.data
+        comment.is_updated = True
+        db.session.commit()
+        flash('Your comment has been updated', 'success')
+        return redirect(url_for('post', post_id=post_id))
+    elif request.method == 'GET':
+            form.content.data = comment.content
+
+    return render_template('edit_comment.html', title='Edit Comment', form=form, legend="Edit Comment")
+
+@app.route('/post/<int:post_id>/<int:comment_id>/delete', methods=['POST'])
+@login_required
+def delete_comment(post_id, comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    
+    if comment.author != current_user or comment.post.id != post_id:
+        abort(403)
+    db.session.delete(comment)
+    db.session.commit()
+    flash('Your comment has been deleted', 'info') 
+    return redirect(url_for('post', post_id=post_id))
+
+
+
 
 def send_reset_email(user:User):
-    token = user.get_reset_token()
-    msg = Message('Password reset', sender=f'noreplay@demo.com', recipients=[user.email])
+    try:
+        token = user.get_reset_token()
+        msg = Message('Password reset', recipients=[user.email])
 
-    msg.body = f''' to reset you'r password visit the following link:
+        msg.body = f''' to reset you'r password visit the following link:
 {url_for('reset_password', token=token, _external=True)}
     
 If you did not make this request then simply ignore this email
     '''
+        mail.send(msg)
+    except Exception as e:
+        flash(f"Error sending email: {str(e)}", 'danger')
+        return redirect(url_for('login'))
 
 
 @app.route('/reset_password', methods=['GET','POST'])
 def reset_request():
     if current_user.is_authenticated:
         return redirect(url_for('home'))
-    form = requestResetForm()
+    form = RequestResetForm()
 
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        send_reset_email(user)
-        flash('An email has been sent to reset passowrd.', 'info')
+        #send_reset_email(user)
+        #flash('An email has been sent to reset passowrd.', 'info')
+        flash(f"unable to send an email", 'info')
         return redirect(url_for('login'))
-
+    flash(f"unable to send email", 'info')
     return render_template('reset_request.html', title='Reset Password', form=form, legend='Reset Password Request')
 
 @app.route('/reset_password/<token>', methods=['GET','POST'])
@@ -193,19 +240,20 @@ def reset_password(token):
         flash('invalid or expired token', 'warning')
         return redirect(url_for('reset_request'))
     
-    form = resetPasswordForm()
+    form = ResetPasswordForm()
     if form.validate_on_submit():
         hashed_pwd = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         user.password = hashed_pwd
         db.session.commit()
         flash(f"You'r password has been updated", 'success')
         return redirect(url_for('home'))
+    flash(f"unable to send an email", 'info')
     return render_template('reset_password.html', title='Reset Password', form=form, legend='Reset Password')
 
-@app.route('/user/reset_password', methods=['GET','POST'])
+@app.route('/user/<string:username>/reset_password', methods=['GET','POST'])
 @login_required
-def user_pwd_reset():
-    form = resetPasswordForm()
+def user_pwd_reset(username):
+    form = ResetPasswordForm()
     if form.validate_on_submit():
         hashed_pwd = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         current_user.password = hashed_pwd

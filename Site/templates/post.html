@@ -16,31 +16,107 @@
             {% if current_user == post.author %}
             <div>
                 <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('update_post', post_id=post.id) }}">Update</a>
-                <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
+                <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deletePost">Delete</button>
             </div>
             {% endif %}
         </div>
         <h2 class="article-title">{{ post.title }}</h2>
         <p class="article-content">{{ post.content }}</p>
     </div>
-    </article>
-    <!-- Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Delete Post</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+</article>
+    {% if current_user.is_authenticated %}
+    <dev class="container">
+        <form action="" method="POST">
+            {{form.hidden_tag()}}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">{{legend}}</legend>
+                <div class="form-group">
+                    {{ form.content.label(class="form-control-label")}}
+
+                    {% if form.content.errors %}
+                        {{ form.content(class="form-control form-control-lg is-invalid")}}
+                        <div class="invalid-feedback">
+                            {% for error in form.content.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.content(class="form-control form-control-lg")}}
+                    {% endif %}
                 </div>
-                <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <form action="{{ url_for('delete_post', post_id=post.id) }}" method="POST">
-                    <input class="btn btn-danger" type="submit" value="Delete">
-                </form>
+                <div class="form-group">
+                    {{ form.submit(class="btn btn-outline-info")}}
+                </div>
+            </fieldset>
+        </form>
+    </dev>
+    {% else %}
+    <div class="border-top pt-3">
+        <h4 class="text-muted">
+            You need to be signed in to comment<a class="ml-2" href="{{ url_for('login') }}">Sign in</a>
+        </h4>
+    {% endif %}
+    <!-- Comments -->
+    {% for comment in comments %}
+    <article class="media content-section">
+        <img class="rounded-circle article-img" 
+        src="{{ url_for('static', filename='profile_pics/' + comment.author.image_file) }}">
+    
+        <div class="media-body">
+            <div class="article-metadata">
+                <a class="mr-2" href="{{ url_for('user', username=comment.author.username) }}">{{ comment.author.username }}</a>
+                <small class="text-muted">{{ comment.date_commented.strftime('%Y-%m-%d') }}</small>
+                {% if comment.is_updated %}
+                <small class="text-muted">edited</small>
+                {% endif %}
+    
+                {% if current_user == comment.author %}
+                <div>
+                    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('update_comment', post_id=post.id, comment_id=comment.id) }}">Update</a>
+                    <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteComment{{comment.id}}">Delete</button>
+                </div>
+                {% endif %}
+            </div>
+            <p class="article-content">{{ comment.content }}</p>
+        </div>
+        </article>
+        <!-- Modal -->
+        <div class="modal fade" id="deleteComment{{comment.id}}" tabindex="-1" role="dialog" aria-labelledby="deleteComment{{comment.id}}Label" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="deleteComment{{comment.id}}dLabel">Delete Comment</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <form action="{{ url_for('delete_comment', post_id=post.id, comment_id=comment.id) }}" method="POST">
+                        <input class="btn btn-danger" type="submit" value="Delete">
+                    </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+        {% endfor %}
+    <!-- Modal -->
+        <div class="modal fade" id="deletePost" tabindex="-1" role="dialog" aria-labelledby="deletePostLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="deletePostLabel">Delete Post</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <form action="{{ url_for('delete_post', post_id=post.id) }}" method="POST">
+                        <input class="btn btn-danger" type="submit" value="Delete">
+                    </form>
+                    </div>
+                </div>
+            </div>
+        </div>
 {% endblock %}

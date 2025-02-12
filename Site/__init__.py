@@ -19,11 +19,13 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
 app.config['MAIL_SERVER'] = 'smtp.google.com'
-app.config['MAIL_POST'] = 587
+app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = env_var.get("USERNAME")
-app.config['MAIL_PASSWORD'] = env_var.get("PWD")
+app.config['MAIL_USERNAME'] = env_var.get("EMAIL")
+app.config['MAIL_PASSWORD'] = env_var.get("APP_PWD")
+app.config['MAIL_DEFAULT_SENDER'] = env_var.get('MAIL_DEFAULT_SENDER')
+
 
 mail = Mail(app)
 
-from Site import routes 
+from Site import routes

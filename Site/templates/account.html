@@ -7,6 +7,7 @@
             <div class="media-body">
                 <h2 class="account-heading">{{ current_user.username }}</h2>
                 <p class="text-secondary">{{ current_user.email }}</p>
+                <a class="text-muted" href="{{ url_for('user_pwd_reset', username=current_user.username)}}">reset password</a>
             </div>
         </dev>
         <!-- FORM HERE -->
