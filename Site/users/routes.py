@@ -1,11 +1,41 @@
-from flask import Blueprint, redirect, url_for, render_template, request, flash, abort
+from flask import Blueprint, redirect, url_for, render_template, request, flash, abort, Response
 from flask_login import current_user, login_required, login_user, logout_user
 from Site import db, bcrypt
 from Site.models import User, Post
 from Site.users.forms import RegistrationForm, LoginForm, UpdateAccountForm, RequestResetForm, ResetPasswordForm 
 from Site.users.utils import save_picture
+from flask import jsonify, make_response
+import json
 
 users = Blueprint('users', __name__)
+
+@users.route('/getusers', methods=["GET", "POST"])
+def get_users():
+
+    if request.is_json:
+        req = request.get_json()
+        users = User.query.filter(User.username.icontains(req.get("user"))).all()
+
+        users_dic = []
+        #users_dic.clear()
+        for user in users:
+            #userArray = {f'user{user.id}': {'name': user.username, 'email': user.email, 'image': user.image_file}}
+            users_dic.append({
+                'id': user.id,'name': user.username, 'email': user.email,
+
+                'image': url_for('static', filename=f'profile_pics/{user.image_file}'), 
+
+                'userURL': url_for('users.user', username=user.username)
+                })
+
+
+        res = make_response(jsonify(users_dic), 200)
+
+        return res
+    else:
+        res = make_response(jsonify("no json recived"), 400)
+        return res
+
 
 @users.route('/register', methods=["GET", "POST"])
 def register():

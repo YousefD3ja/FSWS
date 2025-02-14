@@ -89,3 +89,15 @@ body {
   .account-heading {
     font-size: 2.5rem;
   }
+
+  .post_image {
+    height: 250px;
+    width : 250px;
+    margin: 10px;
+  }
+
+  .user-wraper {
+    width: auto;
+    height: auto;
+    left: auto;
+  }

@@ -41,6 +41,7 @@ class Post(db.Model):
     is_updated = db.Column(db.Boolean, nullable=False, default=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     comments = db.relationship('Comment', backref='post', lazy=True, cascade="all, delete, delete-orphan")
+    pictures = db.relationship('Picture', backref='pic_post', lazy=True, cascade="all, delete, delete-orphan")
 
     def __repr__(self):
         return f"Post('{self.id}':'{self.title}', '{self.date_posted}')"
@@ -51,4 +52,9 @@ class Comment(db.Model):
     content = db.Column(db.Text, nullable=False)
     is_updated = db.Column(db.Boolean, nullable=False, default=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+
+class Picture(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    picture = db.Column(db.String(20), nullable=True, default="ImageIsNull")
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)

@@ -22,6 +22,12 @@
         </div>
         <h2 class="article-title">{{ post.title }}</h2>
         <p class="article-content">{{ post.content }}</p>
+        {% for pic in pics %}
+            {% if pic.picture != "ImageIsNull" %}
+                <img class="post_image" src="{{ url_for('static', filename='post_pics/' + pic.picture) }}">
+            {% endif %}
+        {% endfor %}
+
     </div>
 </article>
     {% if current_user.is_authenticated %}

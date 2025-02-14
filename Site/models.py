@@ -1,1 +1,1 @@
-from Site.Models.models import User, Post, Comment
+from Site.Models.models import User, Post, Comment, Picture
