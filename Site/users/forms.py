@@ -15,11 +15,11 @@ class RegistrationForm(FlaskForm):
 
     def validate_username(self, username):
         if User.query.filter_by(username=username.data).first():
-            raise ValidationError("username already taken, a bit late innit!")
+            raise ValidationError("username already taken.")
     
     def validate_email(self, email):
         if User.query.filter_by(email=email.data).first():
-            raise ValidationError("email already taken, is it even your's (suspicious face)!")
+            raise ValidationError("email already taken.")
 
 
 class LoginForm(FlaskForm):
@@ -38,13 +38,13 @@ class UpdateAccountForm(FlaskForm):
     def validate_username(self, username):
         if username.data != current_user.username:
             if User.query.filter_by(username=username.data).first():
-                raise ValidationError("username already taken, a bit late innit!")
+                raise ValidationError("username already taken.")
             
     
     def validate_email(self, email):
         if email.data != current_user.email:
             if User.query.filter_by(email=email.data).first():
-                raise ValidationError("email already taken, is it even your's (suspicious face)!")
+                raise ValidationError("email already taken.")
             
 class RequestResetForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email()])
