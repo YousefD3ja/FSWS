@@ -29,6 +29,7 @@ it's a simple social media website.
     * you can make it to meet your needs
 
 **if for some reasone you use it**
+
     * You probable going to need to style it.
     * To configure the app use an instance of the config class as an argument for create_app
 
