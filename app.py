@@ -1,5 +1,5 @@
 from Site import create_app, db
-from Site.models import Post, Picture
+from Site.config import Config
 
 app = create_app()
 

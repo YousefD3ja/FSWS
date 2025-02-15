@@ -9,7 +9,7 @@ import json
 
 users = Blueprint('users', __name__)
 
-@users.route('/getusers', methods=["GET", "POST"])
+@users.route('/getusers', methods=["POST"])
 def get_users():
 
     if request.is_json:
