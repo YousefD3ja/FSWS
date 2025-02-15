@@ -5,3 +5,5 @@
 /Site/static/profile_pics/*
 /Site/static/post_pics/*
 /Site/static/pics/*
+
+**__pycache__
