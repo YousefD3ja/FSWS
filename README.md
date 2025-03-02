@@ -35,7 +35,8 @@ it's a simple social media website.
 
 # NOTICE
 **You are not allowed to put it behind a paywall unless:**
-    * you heavily modified it. 
-    * this project is not the center of you project and your project is not built around it. 
-    * the money is a form of donation. 
-    * i gave you permission to.
+
+* you heavily modified it. 
+* this project is not the center of you project and your project is not built around it. 
+* the money is a form of donation. 
+* i gave you permission to.
