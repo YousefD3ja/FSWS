@@ -34,9 +34,9 @@ it's a simple social media website.
 * To configure the app use an instance of the config class as an argument for create_app
 
 # NOTICE
-**You are not allowed to put it behind a paywall unless:**
+**You are not allowed to put project behind a paywall unless:**
 
 * you heavily modified it. 
-* this project is not the center of you project and your project is not built around it. 
+* this project is not the center of your project and your project is not built around it. 
 * the money is a form of donation. 
 * i gave you permission to.
